@@ -97,6 +97,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
     * Regular expressions for parsing section headers and options.
     */
 
+    // TODO: no chars before [
     const SECT_RE = '\[(?P<header>[^]]+)\]';
     
     const OPT_RE = '(?P<option>[^:=\s][^:=]*)\s*(?P<vi>[:=])\s*(?P<value>.*)$';
@@ -159,7 +160,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                     } else {
 						*/
                         $cursect = array();
-                        $cursect['__name__'] = $sectname;
+                        // $cursect['__name__'] = $sectname;
                         $sections[$sectname] = $cursect;
                     // }
                     // So sections can't start with a continuation line
@@ -176,24 +177,25 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         $vi = $mo['vi'];
                         $optval = $mo['value'];
                         // print_r($mo);
-                        if ($vi == '=' || $vi == ':') { 
-                            // 'comments ?  ;' is a comment delimiter only if it follows
-                            // a spacing character?
-                            /*
-                            $pos = strpos($optval, ';'); 
-                            if ($pos !== false) {
-								if ($pos != -1 && (trim($optval[$pos-1]))) {
-									$optval = substr($optval, $pos);
-								}
-							}
-							*/
+                        if ($vi == '=' || $vi == ':') {
+                        // 'comments ?  ;' is a comment delimiter only if it follows
+                        // a spacing character?
+                        /*
+                        $pos = strpos($optval, ';'); 
+                        if ($pos !== false) {
+                            if ($pos != -1 && (trim($optval[$pos-1]))) {
+                                $optval = substr($optval, $pos);
+                            }
+                        }
+                        */
 						}
                         $optval = trim($optval);
                         // allow empty values
                         if ($optval == '""' 
-                            || $optval == '') {
-						    $optname = rtim($optname);
+                            || $optval == "''") {
+						    $optval = '';
                         }
+                        $optname = rtrim($optname);
                         // $cursect[$optname] = $optval;
                         if ($sectname === '') {
 							$sectname = self::GLOBAL_SECT;
@@ -211,24 +213,25 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         $vi = $mo['vi'];
                         $optval = $mo['value'];
                         // print_r($mo);
-                        if ($vi == '=' || $vi == ':') { 
-                            // 'comments ?  ;' is a comment delimiter only if it follows
-                            // a spacing character?
-                            /*
-                            $pos = strpos($optval, ';'); 
-                            if ($pos !== false) {
-								if ($pos != -1 && (trim($optval[$pos-1]))) {
-									$optval = substr($optval, $pos);
-								}
-							}
-							*/
+                        if ($vi == '=' || $vi == ':') {
+                        // 'comments ?  ;' is a comment delimiter only if it follows
+                        // a spacing character?
+                        /*
+                        $pos = strpos($optval, ';'); 
+                        if ($pos !== false) {
+                            if ($pos != -1 && (trim($optval[$pos-1]))) {
+                                $optval = substr($optval, $pos);
+                            }
+                        }
+                        */
 						}
                         $optval = trim($optval);
                         // allow empty values
                         if ($optval == '""' 
-                            || $optval == '') {
-						    $optname = rtim($optname);
+                            || $optval == "''") {
+						    $optval = '';
                         }
+                        $optname = rtrim($optname);
                         // $cursect[$optname] = $optval;
                         if ($sectname === '') {
 							$sectname = self::GLOBAL_SECT;
