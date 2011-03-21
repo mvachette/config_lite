@@ -84,7 +84,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
      *
      * @var string
      */
-    const GLOBAL_SECT = '_GLOBAL_';
+    const GLOBAL_SECT = '__global__';
 
     /**
      * delimiter Regular expressions
@@ -117,17 +117,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
     protected function parseIniFile($filename, $processSections = false) 
     {
         $sections = array();
-        if ($processSections) {}
-        // $sections[];
-        /* Parse a sectioned setup file.
-
-        The sections in setup file contains a title line at the top,
-        indicated by a name in square brackets (`[]'), plus key/value
-        options lines, indicated by `name: value' format lines.
-        Continuations are represented by an embedded newline then
-        leading whitespace.  Blank lines, lines beginning with a '#',
-        and just about everything else are ignored.
-        */
+        // if ($processSections) {}
         $file = new SplFileObject($filename);
         
         $cursect = '';
@@ -142,9 +132,6 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                 || $line[0] == ';') { 
                 continue;
             }
-            // if ($line.split(None, 1)[0].lower() == 'rem' and line[0] in "rR":
-                //no leading whitespace
-            //    continue
             // continuation line?
             if (($line[0] == ' ' )
                 && ($cursect !== '')
@@ -161,60 +148,70 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                 preg_match($re, $line, $mo);
                 if ($mo) {
                     $sectname = $mo['header'];
+                    /*
                     if (in_array($sectname, $sections)) {
                         $cursect = $sections[$sectname];
-                    } else if ($sectname == self::GLOBAL_SECT) {
+                    } else 
+                    if ($sectname == self::GLOBAL_SECT) {
                         // $cursect = $this->_defaults;
                     } else {
+						*/
                         $cursect = array();
                         $cursect['__name__'] = $sectname;
                         $sections[$sectname] = $cursect;
-                    }
+                    // }
                     // So sections can't start with a continuation line
                     $optname = '';
                 // no section header in the file?
                 } else if ($cursect === '') {
                     // throw new MissingSectionHeaderError($filename, $lineno, $line);
                     // throw new Config_Lite_Exception_Runtime($lineno . ':' . $line);
-                }
-                // an option line?
-                else {
-					$re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
+                } else {
+                    // an option line?
+                    $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
                     preg_match($re, $line, $mo);
+                    // print_r($mo);
                     if ($mo) {
-                        // $optname, $vi, $optval = $mo.group('option', 'vi', 'value')
                         $optname = $mo['option'];
                         $vi = $mo['vi'];
-                        $value = $mo['value'];
+                        $optval = $mo['value'];
+                        print_r($mo);
                         if ($vi == '=' || $vi == ':') { 
                             // ';' is a comment delimiter only if it follows
                             // a spacing character
+                            /*
                             $pos = strpos($optval, ';'); 
                             if ($pos !== false) {
 								if ($pos != -1 && (trim($optval[$pos-1]))) {
 									$optval = substr($optval, $pos);
 								}
 							}
+							*/
 						}
                         $optval = trim($optval);
                         // allow empty values
                         if ($optval == '""' 
-                            || $optval = '')
-						    $optname = $this->optionxform(rtim($optname));
-                        $cursect[$optname] = $optval;
+                            || $optval == '') {
+						    ;// $optname = rtim($optname);
+                        }
+                        // $cursect[$optname] = $optval;
+                        if ($sectname === '') {
+							$sectname = self::GLOBAL_SECT;
+						}
+                        $sections[$sectname][$optname] = $optval;
                     } else {
                         // a non-fatal parsing error occurred.  set up the
                         // exception but keep going. the exception will be
                         // raised at the end of the file and will contain a
                         // list of all bogus lines
-                        // throw Config_Lite_Exception_Parse($lineno, $line);
+                        // throw Config_Lite_Exception_Parse($lineno.':'. $line);
                         // throw Config_Lite_Exception_Runtime($lineno . ':' . $line);
                     }
                 }
 			}
 		} // while
 		
-		print_r($cursect);
+		// print_r($cursect);
 		print_r($sections);
 		
         return $sections; 
