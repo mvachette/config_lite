@@ -105,6 +105,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
     /**
      * the parseIniFile method parses the optional given filename 
      * or already setted filename
+     * TODO: Comments, ArraySyntax
      * 
      * @param string $filename Filename
      * @param bool $processSections process sections  
@@ -121,6 +122,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
         $file = new SplFileObject($filename);
         
         $cursect = '';
+        $sectname = '';
         $optname = '';
         $lineno = 0;
         while (!$file->eof()) {
@@ -129,7 +131,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
             // comment or blank line?
             if ((trim($line) === '') 
                 || $line[0] === '#' 
-                || $line[0] == ';') { 
+                || $line[0] === ';') { 
                 continue;
             }
             // continuation line?
@@ -164,9 +166,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                     $optname = '';
                 // no section header in the file?
                 } else if ($cursect === '') {
-                    // throw new MissingSectionHeaderError($filename, $lineno, $line);
-                    // throw new Config_Lite_Exception_Runtime($lineno . ':' . $line);
-                } else {
+					// TODO: parseOptionLine();
                     // an option line?
                     $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
                     preg_match($re, $line, $mo);
@@ -175,10 +175,10 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         $optname = $mo['option'];
                         $vi = $mo['vi'];
                         $optval = $mo['value'];
-                        print_r($mo);
+                        // print_r($mo);
                         if ($vi == '=' || $vi == ':') { 
-                            // ';' is a comment delimiter only if it follows
-                            // a spacing character
+                            // 'comments ?  ;' is a comment delimiter only if it follows
+                            // a spacing character?
                             /*
                             $pos = strpos($optval, ';'); 
                             if ($pos !== false) {
@@ -192,7 +192,42 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         // allow empty values
                         if ($optval == '""' 
                             || $optval == '') {
-						    ;// $optname = rtim($optname);
+						    $optname = rtim($optname);
+                        }
+                        // $cursect[$optname] = $optval;
+                        if ($sectname === '') {
+							$sectname = self::GLOBAL_SECT;
+						}
+                        $sections[$sectname][$optname] = $optval;
+                   }
+                } else {
+                    // TODO: parseOptionLine();
+                    // an option line?
+                    $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
+                    preg_match($re, $line, $mo);
+                    // print_r($mo);
+                    if ($mo) {
+                        $optname = $mo['option'];
+                        $vi = $mo['vi'];
+                        $optval = $mo['value'];
+                        // print_r($mo);
+                        if ($vi == '=' || $vi == ':') { 
+                            // 'comments ?  ;' is a comment delimiter only if it follows
+                            // a spacing character?
+                            /*
+                            $pos = strpos($optval, ';'); 
+                            if ($pos !== false) {
+								if ($pos != -1 && (trim($optval[$pos-1]))) {
+									$optval = substr($optval, $pos);
+								}
+							}
+							*/
+						}
+                        $optval = trim($optval);
+                        // allow empty values
+                        if ($optval == '""' 
+                            || $optval == '') {
+						    $optname = rtim($optname);
                         }
                         // $cursect[$optname] = $optval;
                         if ($sectname === '') {
