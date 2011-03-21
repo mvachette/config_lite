@@ -78,27 +78,38 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
      * @var bool
      */
     protected $processSections = true;
+    
+    /**
+     * global section array key
+     *
+     * @var string
+     */
+    const GLOBAL_SECT = '_GLOBAL_';
+
+    /**
+     * delimiter Regular expressions
+     *
+     * @var string
+     */
+    const RE_DELIM = '/';
 
     /**
     * Regular expressions for parsing section headers and options.
     */
-    const SECT_RE = '\['.'(?P<header>[^]]+)'.'\]';
+
+    const SECT_RE = '\[(?P<header>[^]]+)\]';
     
-    const OPT_RE = '(?P<option>[^:=\s][^:=]*)'
-                  .'\s*(?P<vi>[:=])\s*'
-                  .'(?P<value>.*)$';
+    const OPT_RE = '(?P<option>[^:=\s][^:=]*)\s*(?P<vi>[:=])\s*(?P<value>.*)$';
+    
         
     /**
      * the parseIniFile method parses the optional given filename 
-     * or already setted filename.
+     * or already setted filename
      * 
-     * this method uses the native PHP function 
-     * parse_ini_file behind the scenes. 
-     *
      * @param string $filename Filename
      * @param bool $processSections process sections  
      *
-     * @return void
+     * @return mixed - array sections or bool false on failure
      * @throws Config_Lite_Exception_Runtime when file not found
      * @throws Config_Lite_Exception_Runtime when file is not readable
      * @throws Config_Lite_Exception_Runtime when parse ini file failed
@@ -108,9 +119,107 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
         $sections = array();
         if ($processSections) {}
         // $sections[];
-            
-        return false; 
-    }    
+        /* Parse a sectioned setup file.
+
+        The sections in setup file contains a title line at the top,
+        indicated by a name in square brackets (`[]'), plus key/value
+        options lines, indicated by `name: value' format lines.
+        Continuations are represented by an embedded newline then
+        leading whitespace.  Blank lines, lines beginning with a '#',
+        and just about everything else are ignored.
+        */
+        $file = new SplFileObject($filename);
+        
+        $cursect = '';
+        $optname = '';
+        $lineno = 0;
+        while (!$file->eof()) {
+            $line = $file->fgets();
+            $lineno = $lineno + 1;
+            // comment or blank line?
+            if ((trim($line) === '') 
+                || $line[0] === '#' 
+                || $line[0] == ';') { 
+                continue;
+            }
+            // if ($line.split(None, 1)[0].lower() == 'rem' and line[0] in "rR":
+                //no leading whitespace
+            //    continue
+            // continuation line?
+            if (($line[0] == ' ' )
+                && ($cursect !== '')
+                && ($optname !== '')
+                && $value = trim($line)) {
+                if ($value) {
+                    // $cursect[$optname] = "%s\n%s" % (cursect[optname], value);
+				}
+            }
+            // a section header or option header?
+            else {
+                // is it a section header?
+                $re = self::RE_DELIM.self::SECT_RE.self::RE_DELIM;
+                preg_match($re, $line, $mo);
+                if ($mo) {
+                    $sectname = $mo['header'];
+                    if (in_array($sectname, $sections)) {
+                        $cursect = $sections[$sectname];
+                    } else if ($sectname == self::GLOBAL_SECT) {
+                        // $cursect = $this->_defaults;
+                    } else {
+                        $cursect = array();
+                        $cursect['__name__'] = $sectname;
+                        $sections[$sectname] = $cursect;
+                    }
+                    // So sections can't start with a continuation line
+                    $optname = '';
+                // no section header in the file?
+                } else if ($cursect === '') {
+                    // throw new MissingSectionHeaderError($filename, $lineno, $line);
+                    // throw new Config_Lite_Exception_Runtime($lineno . ':' . $line);
+                }
+                // an option line?
+                else {
+					$re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
+                    preg_match($re, $line, $mo);
+                    if ($mo) {
+                        // $optname, $vi, $optval = $mo.group('option', 'vi', 'value')
+                        $optname = $mo['option'];
+                        $vi = $mo['vi'];
+                        $value = $mo['value'];
+                        if ($vi == '=' || $vi == ':') { 
+                            // ';' is a comment delimiter only if it follows
+                            // a spacing character
+                            $pos = strpos($optval, ';'); 
+                            if ($pos !== false) {
+								if ($pos != -1 && (trim($optval[$pos-1]))) {
+									$optval = substr($optval, $pos);
+								}
+							}
+						}
+                        $optval = trim($optval);
+                        // allow empty values
+                        if ($optval == '""' 
+                            || $optval = '')
+						    $optname = $this->optionxform(rtim($optname));
+                        $cursect[$optname] = $optval;
+                    } else {
+                        // a non-fatal parsing error occurred.  set up the
+                        // exception but keep going. the exception will be
+                        // raised at the end of the file and will contain a
+                        // list of all bogus lines
+                        // throw Config_Lite_Exception_Parse($lineno, $line);
+                        // throw Config_Lite_Exception_Runtime($lineno . ':' . $line);
+                    }
+                }
+			}
+		} // while
+		
+		print_r($cursect);
+		print_r($sections);
+		
+        return $sections; 
+        // return false; 
+    }
     /**
      * the read method parses the optional given filename 
      * or already setted filename.
@@ -140,7 +249,8 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                 . $filename
             );
         }
-        $this->sections = $this->parseIniFile($filename, $this->processSections);
+        $this->_sections = $this->parseIniFile($filename, $this->processSections);
+        // $this->sections = $this->getCleanSections(/* $this->_sections */);
         
         if (false === $this->sections) {
             throw new Config_Lite_Exception_Runtime(
