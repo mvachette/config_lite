@@ -102,14 +102,13 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
     
     const OPT_RE = '(?P<option>[^:=\s][^:=]*)\s*(?P<vi>[:=])\s*(?P<value>.*)$';
     
-        
     /**
      * the parseIniFile method parses the optional given filename 
      * or already setted filename
      * TODO: Comments, ArraySyntax
      * 
-     * @param string $filename Filename
-     * @param bool $processSections process sections  
+     * @param string $filename        Filename
+     * @param bool   $processSections process sections  
      *
      * @return mixed - array sections or bool false on failure
      * @throws Config_Lite_Exception_Runtime when file not found
@@ -118,7 +117,6 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
      */
     protected function parseIniFile($filename, $processSections = false) 
     {
-        $sections = array();
         // if ($processSections) {}
         $file = new SplFileObject($filename);
         
@@ -132,20 +130,20 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
             // comment or blank line?
             if ((trim($line) === '') 
                 || $line[0] === '#' 
-                || $line[0] === ';') { 
+                || $line[0] === ';'
+            ) { 
                 continue;
             }
             // continuation line?
             if (($line[0] == ' ' )
                 && ($cursect !== '')
                 && ($optname !== '')
-                && $value = trim($line)) {
+                && $value = trim($line)
+            ) {
                 if ($value) {
-                    // $cursect[$optname] = "%s\n%s" % (cursect[optname], value);
-				}
-            }
-            // a section header or option header?
-            else {
+                    // $cursect[$optname] .= $value;
+                }
+            } else { // a section header or option header?
                 // is it a section header?
                 $re = self::RE_DELIM.self::SECT_RE.self::RE_DELIM;
                 preg_match($re, $line, $mo);
@@ -167,7 +165,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                     $optname = '';
                 // no section header in the file?
                 } else if ($cursect === '') {
-					// TODO: parseOptionLine();
+                    // TODO: parseOptionLine();
                     // an option line?
                     $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
                     preg_match($re, $line, $mo);
@@ -188,18 +186,18 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                             }
                         }
                         */
-						}
+                        }
                         $optval = trim($optval);
                         // allow empty values
                         if ($optval == '""' 
                             || $optval == "''") {
-						    $optval = '';
+                            $optval = '';
                         }
                         $optname = rtrim($optname);
                         // $cursect[$optname] = $optval;
                         if ($sectname === '') {
-							$sectname = self::GLOBAL_SECT;
-						}
+                            $sectname = self::GLOBAL_SECT;
+                        }
                         $sections[$sectname][$optname] = $optval;
                    }
                 } else {
@@ -224,7 +222,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                             }
                         }
                         */
-						}
+                        }
                         $optval = trim($optval);
                         // allow empty values
                         if ($optval == '""' 
@@ -234,8 +232,8 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         $optname = rtrim($optname);
                         // $cursect[$optname] = $optval;
                         if ($sectname === '') {
-							$sectname = self::GLOBAL_SECT;
-						}
+                            $sectname = self::GLOBAL_SECT;
+                        }
                         $sections[$sectname][$optname] = $optval;
                     } else {
                         // a non-fatal parsing error occurred.  set up the
@@ -244,14 +242,12 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         // list of all bogus lines
                         // throw Config_Lite_Exception_Parse($lineno.':'. $line);
                         // throw Config_Lite_Exception_Runtime($lineno . ':' . $line);
-                    }
-                }
-			}
-		} // while
-		
-		// print_r($cursect);
-		print_r($sections);
-		
+                     }
+                 }
+             }
+         } // while
+        // print_r($cursect);
+        print_r($sections);	
         return $sections; 
         // return false; 
     }
@@ -277,16 +273,20 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
             $this->filename = $filename;
         }
         if (!file_exists($filename)) {
-            throw new Config_Lite_Exception_Runtime('file not found: ' . $filename);
+            throw new Config_Lite_Exception_Runtime(
+                        'file not found: ' . $filename
+                      );
         }
         if (!is_readable($filename)) {
             throw new Config_Lite_Exception_Runtime('file not readable: '
                 . $filename
             );
         }
-        $this->_sections = $this->parseIniFile($filename, $this->processSections);
+        $this->_sections = $this->parseIniFile(
+                                        $filename, 
+                                        $this->processSections
+                                  );
         // $this->sections = $this->getCleanSections(/* $this->_sections */);
-        
         if (false === $this->sections) {
             throw new Config_Lite_Exception_Runtime(
                 'failure, can not parse the file: ' . $filename
