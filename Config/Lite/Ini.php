@@ -142,10 +142,10 @@ if ($pos !== false) {
             $pos = strpos($optname, '['); 
             if (false !== $pos) {
                 // var_dump($pos);
-                // 
                 // get index and pop val into array
                 $optarray = substr($optname, 0, $pos);
-                $index = substr($optname, $pos+1, strlen($optname)-$pos-2);
+                $index = substr($optname, $pos+1, strlen($optname)-$pos);
+                $index = trim(str_replace(']', '', $index));
                 if (!is_array($this->_sections[$sectname][$optarray])) {
                     $this->_sections[$sectname][$optarray] = array();
                 }
