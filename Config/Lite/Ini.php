@@ -117,37 +117,44 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
         // an option line?
         $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
         preg_match($re, $line, $mo);
-        // print_r($mo);
         if ($mo) {
             $optname = $mo['option'];
             $vi = $mo['vi'];
             $optval = $mo['value'];
-            // print_r($mo);
             if ($vi == '=' || $vi == ':') {
             // 'comments ?  ;' is a comment delimiter only if it follows
-		// a spacing character?
-		/*
-		$pos = strpos($optval, ';'); 
-		if ($pos !== false) {
-			if ($pos != -1 && (trim($optval[$pos-1]))) {
-				$optval = substr($optval, $pos);
-			}
-		}
-		*/
-		}
-             $optval = trim($optval);
+/*
+$pos = strpos($optval, ';'); 
+if ($pos !== false) {
+    if ($pos != -1 && (trim($optval[$pos-1]))) {
+        $optval = substr($optval, $pos);
+    }
+}
+*/
+            }
+            $optval = trim($optval);
              // allow empty values
-             if ($optval == '""' 
+            if ($optval == '""' 
                  || $optval == "''") {
                  $optval = '';
-		     }
-		     $optname = rtrim($optname);
-		     // $cursect[$optname] = $optval;
-		     if ($sectname === '') {
-			    $sectname = self::GLOBAL_SECT;
-		    }
-		    $this->_sections[$sectname][$optname] = $optval;
-        }    
+            }
+		    $optname = trim($optname);
+            $pos = strpos($optname, '['); 
+            if (false !== $pos) {
+                // var_dump($pos);
+                // 
+                // get index and pop val into array
+                $optarray = substr($optname, 0, $pos);
+                $index = substr($optname, $pos+1, strlen($optname)-$pos-2);
+                if (!is_array($this->_sections[$sectname][$optarray])) {
+                    $this->_sections[$sectname][$optarray] = array();
+                }
+                $this->_sections[$sectname][$optarray][$index] = $optval;
+                return;
+            }
+		    // $cursect[$optname] = $optval;
+            $this->_sections[$sectname][$optname] = $optval;
+        }
     }
     
     /**
@@ -169,7 +176,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
         $file = new SplFileObject($filename);
         
         $cursect = '';
-        $sectname = '';
+        $sectname = self::GLOBAL_SECT;
         $optname = '';
         $lineno = 0;
         while (!$file->eof()) {
@@ -196,39 +203,20 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                 $re = self::RE_DELIM.self::SECT_RE.self::RE_DELIM;
                 preg_match($re, ltrim($line), $mo);
                 if ($mo) {
-                    $sectname = $mo['header'];
-                    /*
-                    if (in_array($sectname, $sections)) {
-                        $cursect = $sections[$sectname];
-                    } else 
-                    if ($sectname == self::GLOBAL_SECT) {
-                        // $cursect = $this->_defaults;
-                    } else {
-						*/
-                        $cursect = array();
-                        // $cursect['__name__'] = $sectname;
-                        $this->_sections[$sectname] = $cursect;
-                    // }
+                    $sectname = trim($mo['header']);
+                    $cursect = array();
+                    $this->_sections[$sectname] = $cursect;
                     // So sections can't start with a continuation line
                     $optname = '';
                 // no section header in the file?
                 } else if ($cursect === '') {
-					$this->parseOptionLine($line, $sectname);
+                    $this->parseOptionLine($line, $sectname);
                 } else {
                     // an option line?
                     $this->parseOptionLine($line, $sectname);
-                    // } else {
-                        // a non-fatal parsing error occurred.  set up the
-                        // exception but keep going. the exception will be
-                        // raised at the end of the file and will contain a
-                        // list of all bogus lines
-                        // throw Config_Lite_Exception_Parse($lineno.':'. $line);
-                        // throw Config_Lite_Exception_Runtime($lineno . ':' . $line);
-                     }
-                 }
-         }
-         //} // while
-        // print_r($cursect);
+                }
+            }
+        }
         print_r($this->_sections);	
         return $this->_sections; 
         // return false; 
