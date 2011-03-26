@@ -194,7 +194,7 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
             } else { // a section header or option header?
                 // is it a section header?
                 $re = self::RE_DELIM.self::SECT_RE.self::RE_DELIM;
-                preg_match($re, $line, $mo);
+                preg_match($re, ltrim($line), $mo);
                 if ($mo) {
                     $sectname = $mo['header'];
                     /*
