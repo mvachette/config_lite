@@ -96,11 +96,59 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
     /**
     * Regular expressions for parsing section headers and options.
     */
-
-    // TODO: no chars before [
-    const SECT_RE = '\[(?P<header>[^]]+)\]';
+    const SECT_RE = '^\[(?P<header>[^]]+)\]';
+    
     
     const OPT_RE = '(?P<option>[^:=\s][^:=]*)\s*(?P<vi>[:=])\s*(?P<value>.*)$';
+
+    /**
+     * parse line test if it is an option
+     * 
+     * @param string $filename        Filename
+     * @param bool   $processSections process sections  
+     *
+     * @return mixed - array sections or bool false on failure
+     * @throws Config_Lite_Exception_Runtime when file not found
+     * @throws Config_Lite_Exception_Runtime when file is not readable
+     * @throws Config_Lite_Exception_Runtime when parse ini file failed
+     */
+    protected function parseOptionLine($line, $sectname)
+    {
+        // an option line?
+        $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
+        preg_match($re, $line, $mo);
+        // print_r($mo);
+        if ($mo) {
+            $optname = $mo['option'];
+            $vi = $mo['vi'];
+            $optval = $mo['value'];
+            // print_r($mo);
+            if ($vi == '=' || $vi == ':') {
+            // 'comments ?  ;' is a comment delimiter only if it follows
+		// a spacing character?
+		/*
+		$pos = strpos($optval, ';'); 
+		if ($pos !== false) {
+			if ($pos != -1 && (trim($optval[$pos-1]))) {
+				$optval = substr($optval, $pos);
+			}
+		}
+		*/
+		}
+             $optval = trim($optval);
+             // allow empty values
+             if ($optval == '""' 
+                 || $optval == "''") {
+                 $optval = '';
+		     }
+		     $optname = rtrim($optname);
+		     // $cursect[$optname] = $optval;
+		     if ($sectname === '') {
+			    $sectname = self::GLOBAL_SECT;
+		    }
+		    $this->_sections[$sectname][$optname] = $optval;
+        }    
+    }
     
     /**
      * the parseIniFile method parses the optional given filename 
@@ -159,83 +207,17 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
 						*/
                         $cursect = array();
                         // $cursect['__name__'] = $sectname;
-                        $sections[$sectname] = $cursect;
+                        $this->_sections[$sectname] = $cursect;
                     // }
                     // So sections can't start with a continuation line
                     $optname = '';
                 // no section header in the file?
                 } else if ($cursect === '') {
-                    // TODO: parseOptionLine();
-                    // an option line?
-                    $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
-                    preg_match($re, $line, $mo);
-                    // print_r($mo);
-                    if ($mo) {
-                        $optname = $mo['option'];
-                        $vi = $mo['vi'];
-                        $optval = $mo['value'];
-                        // print_r($mo);
-                        if ($vi == '=' || $vi == ':') {
-                        // 'comments ?  ;' is a comment delimiter only if it follows
-                        // a spacing character?
-                        /*
-                        $pos = strpos($optval, ';'); 
-                        if ($pos !== false) {
-                            if ($pos != -1 && (trim($optval[$pos-1]))) {
-                                $optval = substr($optval, $pos);
-                            }
-                        }
-                        */
-                        }
-                        $optval = trim($optval);
-                        // allow empty values
-                        if ($optval == '""' 
-                            || $optval == "''") {
-                            $optval = '';
-                        }
-                        $optname = rtrim($optname);
-                        // $cursect[$optname] = $optval;
-                        if ($sectname === '') {
-                            $sectname = self::GLOBAL_SECT;
-                        }
-                        $sections[$sectname][$optname] = $optval;
-                   }
+					$this->parseOptionLine($line, $sectname);
                 } else {
-                    // TODO: parseOptionLine();
                     // an option line?
-                    $re = self::RE_DELIM.self::OPT_RE.self::RE_DELIM;
-                    preg_match($re, $line, $mo);
-                    // print_r($mo);
-                    if ($mo) {
-                        $optname = $mo['option'];
-                        $vi = $mo['vi'];
-                        $optval = $mo['value'];
-                        // print_r($mo);
-                        if ($vi == '=' || $vi == ':') {
-                        // 'comments ?  ;' is a comment delimiter only if it follows
-                        // a spacing character?
-                        /*
-                        $pos = strpos($optval, ';'); 
-                        if ($pos !== false) {
-                            if ($pos != -1 && (trim($optval[$pos-1]))) {
-                                $optval = substr($optval, $pos);
-                            }
-                        }
-                        */
-                        }
-                        $optval = trim($optval);
-                        // allow empty values
-                        if ($optval == '""' 
-                            || $optval == "''") {
-						    $optval = '';
-                        }
-                        $optname = rtrim($optname);
-                        // $cursect[$optname] = $optval;
-                        if ($sectname === '') {
-                            $sectname = self::GLOBAL_SECT;
-                        }
-                        $sections[$sectname][$optname] = $optval;
-                    } else {
+                    $this->parseOptionLine($line, $sectname);
+                    // } else {
                         // a non-fatal parsing error occurred.  set up the
                         // exception but keep going. the exception will be
                         // raised at the end of the file and will contain a
@@ -244,11 +226,11 @@ class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
                         // throw Config_Lite_Exception_Runtime($lineno . ':' . $line);
                      }
                  }
-             }
-         } // while
+         }
+         //} // while
         // print_r($cursect);
-        print_r($sections);	
-        return $sections; 
+        print_r($this->_sections);	
+        return $this->_sections; 
         // return false; 
     }
     /**
