@@ -41,7 +41,7 @@ require_once 'Config/Lite/Exception/UnexpectedValue.php';
  * @license   http://www.gnu.org/copyleft/lesser.html  LGPL License 2.1
  * @link      https://github.com/pce/config_lite
  */
-class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable
+class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable, Serializable
 {
     /**
      * sections, holds the config sections
@@ -146,7 +146,7 @@ if ($pos !== false) {
                 $optarray = substr($optname, 0, $pos);
                 $index = substr($optname, $pos+1, strlen($optname)-$pos);
                 $index = trim(str_replace(']', '', $index));
-                if (!is_array($this->_sections[$sectname][$optarray])) {
+                if (!isset($this->_sections[$sectname][$optarray])) {
                     $this->_sections[$sectname][$optarray] = array();
                 }
                 $this->_sections[$sectname][$optarray][$index] = $optval;
@@ -165,7 +165,7 @@ if ($pos !== false) {
      * @param string $filename        Filename
      * @param bool   $processSections process sections  
      *
-     * @return mixed - array sections or bool false on failure
+     * @return mixed - array sections or bool f	alse on failure
      * @throws Config_Lite_Exception_Runtime when file not found
      * @throws Config_Lite_Exception_Runtime when file is not readable
      * @throws Config_Lite_Exception_Runtime when parse ini file failed
@@ -256,12 +256,23 @@ if ($pos !== false) {
                                         $filename, 
                                         $this->processSections
                                   );
-        // $this->sections = $this->getCleanSections(/* $this->_sections */);
+        $this->sections = $this->getCleanSections();
         if (false === $this->sections) {
             throw new Config_Lite_Exception_Runtime(
                 'failure, can not parse the file: ' . $filename
             );
         }
+    }
+
+    /**
+     * get the sections without the metainfos, 
+     * ie. the arraykey for global values
+     *
+     * @return Array
+     */
+    protected function getCleanSections() 
+    {
+        return $this->_sections;
     }
     
     /**
@@ -900,7 +911,21 @@ if ($pos !== false) {
     {
         return count($this->sections);
     }
-    
+
+
+    public function serialize()
+	{
+		return serialize($this->sections);
+    }
+
+
+    public function unserialize($serializedData)
+    {
+        // $this->sections = unserialize($serializedData);
+        $sections = unserialize($serializedData);
+        $this->sections = $sections;
+    }
+
     /**
      * takes an optional filename, if the file exists, also reads it.
      *
