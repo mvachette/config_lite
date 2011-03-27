@@ -41,7 +41,10 @@ require_once 'Config/Lite/Exception/UnexpectedValue.php';
  * @license   http://www.gnu.org/copyleft/lesser.html  LGPL License 2.1
  * @link      https://github.com/pce/config_lite
  */
-class Config_Lite_Ini implements ArrayAccess, IteratorAggregate, Countable, Serializable
+class Config_Lite_Ini implements ArrayAccess, 
+                                 IteratorAggregate, 
+                                 Countable, 
+                                 Serializable
 {
     /**
      * sections, holds the config sections
@@ -138,6 +141,16 @@ if ($pos !== false) {
                  || $optval == "''") {
                  $optval = '';
             }
+			// stringval?
+			if (($optval[0] == '"' 
+				&& $optval[strlen($optval)-1] == '"')
+				||
+				($optval[0] == '\'' 
+				&& $optval[strlen($optval)-1] == '\'')) {
+				$optval = substr($optval, 1, -1);
+			}
+             // echo '0:'.$optval[0]."\n";
+
 		    $optname = trim($optname);
             $pos = strpos($optname, '['); 
             if (false !== $pos) {
