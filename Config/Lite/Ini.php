@@ -285,7 +285,10 @@ if ($pos !== false) {
      */
     protected function getCleanSections() 
     {
-        return $this->_sections;
+        $sections  = $this->_sections;
+        $sections += $this->_sections[self::GLOBAL_SECT];
+        unset($sections[self::GLOBAL_SECT]);
+        return $sections;
     }
     
     /**
