@@ -230,7 +230,7 @@ if ($pos !== false) {
                 }
             }
         }
-        print_r($this->_sections);	
+        // print_r($this->_sections);	
         return $this->_sections; 
         // return false; 
     }
@@ -299,7 +299,7 @@ if ($pos !== false) {
      */
     public function save() 
     {
-        return $this->write($this->filename, $this->sections);
+        return $this->write($this->filename, $this->_sections);
     }
     /**
      * sync the file to the object
@@ -318,10 +318,10 @@ if ($pos !== false) {
         if (!isset($this->filename)) {
             throw new Config_Lite_Exception_Runtime('no filename set.');
         }
-        if (!is_array($this->sections)) {
-            $this->sections = array();
+        if (!is_array($this->_sections)) {
+            $this->_sections = array();
         }
-        if ($this->write($this->filename, $this->sections)) {
+        if ($this->write($this->filename, $this->_sections)) {
             $this->read($this->filename);
         }
     }
@@ -408,11 +408,31 @@ if ($pos !== false) {
                 if (!is_array($item)) {
                     $value    = $this->normalizeValue($item);
                     $globals .= $section . ' = ' . $value . $this->linebreak;
-                }
+                } else {
+					if ($section === self::GLOBAL_SECT) {
+						// foreach ($sectionsarray as $section => $item) {
+							if (is_array($item)) {
+								foreach ($item as $key => $value) {
+									if (is_array($value)) {
+										foreach ($value as $arrkey => $arrvalue) {
+											$arrvalue  = $this->normalizeValue($arrvalue);
+											$arrkey    = $key . '[' . $arrkey . ']';
+											$sections .= $arrkey . ' = ' . $arrvalue 
+														. $this->linebreak;
+										}
+									} else {
+										$value     = $this->normalizeValue($value);
+										$sections .= $key . ' = ' . $value . $this->linebreak;
+									}
+								}
+							}
+						// }
+                    }
+				}
             }
             $content .= $globals;
             foreach ($sectionsarray as $section => $item) {
-                if (is_array($item)) {
+                if (is_array($item) && $section !== self::GLOBAL_SECT) {
                     $sections .= "\n[" . $section . "]\n";
                     foreach ($item as $key => $value) {
                         if (is_array($value)) {
@@ -852,7 +872,7 @@ if ($pos !== false) {
      */
     public function __toString() 
     {
-        return $this->buildOutputString($this->sections);
+        return $this->buildOutputString($this->_sections);
     }
     
     /**
