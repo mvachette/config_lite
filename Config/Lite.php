@@ -183,7 +183,8 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
         }
         if (is_string($value) 
             && !$this->isBool($value) 
-            && $this->doubleQuoteStrings) {
+            && $this->doubleQuoteStrings
+        ) {
             $value = '"' . $value . '"';
         }
         return $value;
