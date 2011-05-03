@@ -77,6 +77,13 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
     protected $processSections = true;
     
     /**
+     * doubleQuoteStrings - if true, strings will be doubleQuoted
+     * 
+     * @var bool
+     */
+    protected $doubleQuoteStrings = true;
+    
+    /**
      * the read method parses the optional given filename 
      * or already setted filename.
      * 
@@ -174,8 +181,11 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
         } elseif (is_numeric($value)) {
             return $value;
         }
-        // if (is_string($value) && !$this->isBool($value))
-        $value = '"' . $value . '"';
+        if (is_string($value) && 
+            !$this->isBool($value) && 
+            $this->doubleQuoteStrings) {
+            $value = '"' . $value . '"';
+        }
         return $value;
     }
     

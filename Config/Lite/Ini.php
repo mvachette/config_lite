@@ -410,23 +410,21 @@ if ($pos !== false) {
                     $globals .= $section . ' = ' . $value . $this->linebreak;
                 } else {
 					if ($section === self::GLOBAL_SECT) {
-						// foreach ($sectionsarray as $section => $item) {
-							if (is_array($item)) {
-								foreach ($item as $key => $value) {
-									if (is_array($value)) {
-										foreach ($value as $arrkey => $arrvalue) {
-											$arrvalue  = $this->normalizeValue($arrvalue);
-											$arrkey    = $key . '[' . $arrkey . ']';
-											$sections .= $arrkey . ' = ' . $arrvalue 
-														. $this->linebreak;
-										}
-									} else {
-										$value     = $this->normalizeValue($value);
-										$sections .= $key . ' = ' . $value . $this->linebreak;
+						if (is_array($item)) {
+							foreach ($item as $key => $value) {
+								if (is_array($value)) {
+									foreach ($value as $arrkey => $arrvalue) {
+										$arrvalue  = $this->normalizeValue($arrvalue);
+										$arrkey    = $key . '[' . $arrkey . ']';
+										$sections .= $arrkey . ' = ' . $arrvalue 
+													. $this->linebreak;
 									}
+								} else {
+									$value     = $this->normalizeValue($value);
+									$sections .= $key . ' = ' . $value . $this->linebreak;
 								}
 							}
-						// }
+						}
                     }
 				}
             }
