@@ -671,6 +671,22 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
     }
     
     /**
+     * Sets whether or not to doubleQuote
+     * 
+     * If true, everything but bool and numeric 
+     * values get doublequoted.
+     * 
+     * @param bool $doubleQuoteStrings - if true, Strings get doubleQuoted 
+     * 
+     * @return $this
+     */
+    public function setDoubleQuote($doubleQuoteStrings)
+    {
+        $this->doubleQuoteStrings = $doubleQuoteStrings;
+        return $this;
+    }
+    
+    /**
      * text presentation of the config object
      *
      * since a empty config is valid,
